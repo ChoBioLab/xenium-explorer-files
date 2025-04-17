@@ -1,0 +1,202 @@
+:root {
+    /* Nord Theme Colors */
+    --nord0: #2E3440;  /* Dark background */
+    --nord1: #3B4252;  /* Darker elements */
+    --nord2: #434C5E;  /* Lighter background elements */
+    --nord3: #4C566A;  /* Lightest background elements */
+    --nord4: #D8DEE9;  /* Darkest text color */
+    --nord5: #E5E9F0;  /* Default text color */
+    --nord6: #ECEFF4;  /* Light text color */
+    --nord7: #8FBCBB;  /* Accent color (teal) */
+    --nord8: #88C0D0;  /* Primary accent (light blue) */
+    --nord9: #81A1C1;  /* Secondary accent (blue) */
+    --nord10: #5E81AC; /* Tertiary accent (dark blue) */
+    --nord11: #BF616A; /* Red */
+    --nord12: #D08770; /* Orange */
+    --nord13: #EBCB8B; /* Yellow */
+    --nord14: #A3BE8C; /* Green */
+    --nord15: #B48EAD; /* Purple */
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: var(--nord5);
+    background-color: var(--nord0);
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: var(--nord1);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--nord3);
+}
+
+h1 {
+    color: var(--nord6);
+}
+
+.last-updated {
+    font-size: 0.8rem;
+    color: var(--nord4);
+}
+
+.filter-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: var(--nord2);
+    border-radius: 6px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: var(--nord6);
+}
+
+select, input {
+    padding: 8px 12px;
+    border: 1px solid var(--nord3);
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: var(--nord0);
+    color: var(--nord4);
+}
+
+select:focus, input:focus {
+    outline: none;
+    border-color: var(--nord7);
+    box-shadow: 0 0 0 2px rgba(143, 188, 187, 0.3);
+}
+
+button {
+    padding: 8px 16px;
+    background-color: var(--nord9);
+    color: var(--nord6);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: var(--nord10);
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.results-count {
+    font-weight: bold;
+    color: var(--nord5);
+}
+
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.results-table thead {
+    background-color: var(--nord3);
+    color: var(--nord6);
+}
+
+.results-table th, .results-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--nord3);
+}
+
+.results-table tr {
+    background-color: var(--nord1);
+}
+
+.results-table tr:nth-child(even) {
+    background-color: var(--nord2);
+}
+
+.results-table tr:hover {
+    background-color: var(--nord3);
+}
+
+.copy-btn {
+    padding: 6px 12px;
+    background-color: var(--nord9);
+    font-size: 12px;
+}
+
+.copy-btn:hover {
+    background-color: var(--nord10);
+}
+
+.no-results {
+    padding: 20px;
+    text-align: center;
+    font-style: italic;
+    color: var(--nord4);
+    background-color: var(--nord1);
+    border-radius: 4px;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    font-weight: bold;
+    color: var(--nord8);
+}
+
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    background-color: var(--nord14);
+    color: var(--nord0);
+    border-radius: 4px;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: transform 0.3s, opacity 0.3s;
+}
+
+.notification.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.s3-uri {
+    color: var(--nord8);
+    font-family: monospace;
+    font-size: 0.9em;
+}
+

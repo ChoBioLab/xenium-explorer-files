@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xenium Explorer Files</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Xenium Explorer</h1>
+            <div class="last-updated">Last updated: <span id="update-time">Loading...</span></div>
+        </header>
+
+        <div class="filter-section">
+            <div class="filter-group">
+                <label for="project-filter">Project</label>
+                <select id="project-filter">
+                    <option value="">All Projects</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="brp-filter">Block ID</label>
+                <select id="brp-filter">
+                    <option value="">All Block IDs</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="panel-filter">Panel</label>
+                <select id="panel-filter">
+                    <option value="">All Panels</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="search-filter">Search</label>
+                <input type="text" id="search-filter" placeholder="Search by any term...">
+            </div>
+
+            <div class="filter-group" style="justify-content: flex-end;">
+                <button id="reset-filters">Reset Filters</button>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <div class="results-header">
+                <div class="results-count">Showing <span id="filtered-count">0</span> of <span id="total-count">0</span> files</div>
+            </div>
+
+            <div id="results-container">
+                <div class="loading">Loading experiment.xenium files...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">Copied to clipboard!</div>
+
+    <script src="assets/js/main.js"></script>
+</body>
+</html>
+
