@@ -1,28 +1,48 @@
 #!/usr/bin/env python3
-import argparse
 import json
+import logging
 import os
 import re
 import subprocess
+import sys
 from datetime import datetime
 
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler(
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), "xenium_cache.log")
+        ),
+        logging.StreamHandler(),
+    ],
+)
 
-def generate_xenium_cache(
-    bucket="cholab-xenium-explorer-storage/sopa", output_file="xenium_cache.json"
-):
-    """Generate a cache of all experiment.xenium files in the bucket with extracted metadata."""
+
+def generate_xenium_cache():
+    """Generate a cache of all experiment.xenium files and save to project root."""
+    # Get the project root directory (one level up from the script location)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(script_dir)
+    output_file = os.path.join(project_root, "xenium_cache.json")
+
+    bucket = "cholab-xenium-explorer-storage"
+    logging.info(f"Starting cache generation for s3://{bucket}/")
+
     try:
         # Fetch all files in bucket
         cmd = ["aws", "s3", "ls", f"s3://{bucket}/", "--recursive"]
-        print(f"Fetching all files from s3://{bucket}/...")
+        logging.info(f"Running AWS command: {' '.join(cmd)}")
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         all_files = result.stdout.splitlines()
+        logging.info(f"Found {len(all_files)} total files in S3 bucket")
     except subprocess.CalledProcessError as e:
-        print(f"Error accessing S3 bucket: {e}")
-        print(f"Error details: {e.stderr}")
+        logging.error(f"Error accessing S3 bucket: {e}")
+        logging.error(f"Error details: {e.stderr}")
         return False
 
-    # Find experiment.xenium files and extract metadata
+    # Process experiment.xenium files and extract metadata
     xenium_files = []
     skipped_files = 0
 
@@ -65,13 +85,13 @@ def generate_xenium_cache(
         "files": xenium_files,
     }
 
-    # Write cache to file
+    # Write cache to file in project root
     with open(output_file, "w") as f:
         json.dump(cache, f, indent=2)
 
-    print(f"Cache generated with {len(xenium_files)} experiment.xenium files")
-    print(f"Skipped {skipped_files} files in .zarr directories")
-    print(f"Cache saved to {output_file}")
+    logging.info(f"Cache generated with {len(xenium_files)} experiment.xenium files")
+    logging.info(f"Skipped {skipped_files} files in .zarr directories")
+    logging.info(f"Cache saved to {output_file}")
 
     return True
 
@@ -80,7 +100,7 @@ def extract_metadata_from_path(path):
     """Extract metadata fields from the path."""
     metadata = {
         "project": None,
-        "brp_id": None,
+        "brp_id": None,  # Block ID
         "panel": None,
         "full_experiment_id": None,
     }
@@ -95,10 +115,10 @@ def extract_metadata_from_path(path):
         # Look for patterns like 50006A-TUQ97N-EA_2025-02-04-0920
         if re.match(r"^\w+\-\w+\-\w+\_", part):
             metadata["full_experiment_id"] = part
-            # Extract BRP_ID (e.g., 50006A)
-            brp_match = re.match(r"^(\w+)\-", part)
-            if brp_match:
-                metadata["brp_id"] = brp_match.group(1)
+            # Extract Block ID (e.g., 50006A)
+            block_match = re.match(r"^(\w+)\-", part)
+            if block_match:
+                metadata["brp_id"] = block_match.group(1)
 
             # Extract Panel (e.g., TUQ97N)
             panel_match = re.match(r"^\w+\-(\w+)\-", part)
@@ -108,20 +128,5 @@ def extract_metadata_from_path(path):
     return metadata
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Generate cache of experiment.xenium files"
-    )
-    parser.add_argument(
-        "--bucket", default="cholab-xenium-explorer-storage/sopa", help="S3 bucket name"
-    )
-    parser.add_argument(
-        "--output", default="xenium_cache.json", help="Output cache file path"
-    )
-    args = parser.parse_args()
-
-    generate_xenium_cache(args.bucket, args.output)
-
-
 if __name__ == "__main__":
-    main()
+    generate_xenium_cache()
