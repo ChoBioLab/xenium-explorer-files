@@ -4,7 +4,6 @@ import logging
 import os
 import re
 import subprocess
-import sys
 from datetime import datetime
 
 # Set up logging
@@ -13,7 +12,9 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
         logging.FileHandler(
-            os.path.join(os.path.dirname(os.path.dirname(__file__)), "xenium_cache.log")
+            os.path.join(
+                os.path.dirname(os.path.dirname(__file__)), "logs", "xenium_cache.log"
+            )
         ),
         logging.StreamHandler(),
     ],
@@ -84,6 +85,10 @@ def generate_xenium_cache():
         "file_count": len(xenium_files),
         "files": xenium_files,
     }
+
+    # Ensure logs directory exists
+    logs_dir = os.path.join(project_root, "logs")
+    os.makedirs(logs_dir, exist_ok=True)
 
     # Write cache to file in project root
     with open(output_file, "w") as f:

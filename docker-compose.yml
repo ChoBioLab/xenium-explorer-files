@@ -1,0 +1,13 @@
+version: '3'
+services:
+  xenium-explorer-files:
+    build: .
+    container_name: xenium-explorer-files
+    restart: always
+    ports:
+      - "9753:80"
+    volumes:
+      # Mount the cache file so it can be updated without rebuilding container
+      - ./xenium_cache.json:/usr/share/nginx/html/xenium_cache.json
+      # Mount the log file directory
+      - ./logs:/logs
