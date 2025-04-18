@@ -6,16 +6,20 @@ import re
 import subprocess
 from datetime import datetime
 
+# Get the project root directory (one level up from the script location)
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(script_dir)
+logs_dir = os.path.join(project_root, "logs")
+
+# Ensure logs directory exists
+os.makedirs(logs_dir, exist_ok=True)
+
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler(
-            os.path.join(
-                os.path.dirname(os.path.dirname(__file__)), "logs", "xenium_cache.log"
-            )
-        ),
+        logging.FileHandler(os.path.join(logs_dir, "xenium_cache.log")),
         logging.StreamHandler(),
     ],
 )
@@ -23,9 +27,6 @@ logging.basicConfig(
 
 def generate_xenium_cache():
     """Generate a cache of all experiment.xenium files and save to project root."""
-    # Get the project root directory (one level up from the script location)
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(script_dir)
     output_file = os.path.join(project_root, "xenium_cache.json")
 
     bucket = "cholab-xenium-explorer-storage"
@@ -86,10 +87,6 @@ def generate_xenium_cache():
         "files": xenium_files,
     }
 
-    # Ensure logs directory exists
-    logs_dir = os.path.join(project_root, "logs")
-    os.makedirs(logs_dir, exist_ok=True)
-
     # Write cache to file in project root
     with open(output_file, "w") as f:
         json.dump(cache, f, indent=2)
@@ -107,28 +104,61 @@ def extract_metadata_from_path(path):
         "project": None,
         "brp_id": None,  # Block ID
         "panel": None,
+        "run_id": None,  # For OBA outputs
+        "source_type": None,  # 'sopa' or 'oba'
         "full_experiment_id": None,
     }
 
     # Extract project (typically second component)
     path_parts = path.split("/")
-    if len(path_parts) >= 2:
-        metadata["project"] = path_parts[1]
 
-    # Extract experiment ID components from folder names
-    for part in path_parts:
-        # Look for patterns like 50006A-TUQ97N-EA_2025-02-04-0920
-        if re.match(r"^\w+\-\w+\-\w+\_", part):
-            metadata["full_experiment_id"] = part
-            # Extract Block ID (e.g., 50006A)
-            block_match = re.match(r"^(\w+)\-", part)
-            if block_match:
-                metadata["brp_id"] = block_match.group(1)
+    # Determine source type and extract metadata accordingly
+    if "sopa" in path_parts:
+        metadata["source_type"] = "sopa"
 
-            # Extract Panel (e.g., TUQ97N)
-            panel_match = re.match(r"^\w+\-(\w+)\-", part)
-            if panel_match:
-                metadata["panel"] = panel_match.group(1)
+        # For SOPA outputs, project is typically the component after "sopa"
+        sopa_index = path_parts.index("sopa")
+        if len(path_parts) > sopa_index + 1:
+            metadata["project"] = path_parts[sopa_index + 1]
+
+        # Extract experiment ID components from folder names (maintaining original logic)
+        for part in path_parts:
+            # Look for patterns like 54590A-3PCK8T-JS_2025-04-14-1841
+            if re.match(r"^\w+\-\w+\-\w+\_", part):
+                metadata["full_experiment_id"] = part
+                # Extract Block ID (e.g., 54590A)
+                block_match = re.match(r"^(\w+)\-", part)
+                if block_match:
+                    metadata["brp_id"] = block_match.group(1)
+
+                # Extract Panel (e.g., 3PCK8T)
+                panel_match = re.match(r"^\w+\-(\w+)\-", part)
+                if panel_match:
+                    metadata["panel"] = panel_match.group(1)
+
+    elif "oba-outputs" in path_parts:
+        metadata["source_type"] = "oba"
+
+        # For OBA outputs, panel ID is the component after "oba-outputs"
+        oba_index = path_parts.index("oba-outputs")
+        if len(path_parts) > oba_index + 1:
+            metadata["panel"] = path_parts[oba_index + 1]
+
+        # Run ID is the component after the panel ID
+        if len(path_parts) > oba_index + 2:
+            metadata["run_id"] = path_parts[oba_index + 2]
+
+        # For OBA, extract Block ID from the output folder name
+        for part in path_parts:
+            if part.startswith("output-"):
+                # FIX: Extract just the Block ID from the pattern
+                # Look for the pattern like __NNNNNN__AAAAA-BBBBB-CC__YYYYMMDD
+                # where AAAAA is the Block ID
+                # Example: output-XETG00189__0050214__56524A-3PCK8T-JS__20250115__205329
+                block_match = re.search(r"__\d+__(\w+)\-\w+\-\w+__", part)
+                if block_match:
+                    metadata["brp_id"] = block_match.group(1)
+                metadata["full_experiment_id"] = part
 
     return metadata
 
