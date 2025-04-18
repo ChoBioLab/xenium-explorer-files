@@ -8,6 +8,7 @@ const projectFilter = document.getElementById('project-filter');
 const brpFilter = document.getElementById('brp-filter');
 const panelFilter = document.getElementById('panel-filter');
 const runIdFilter = document.getElementById('run-id-filter');
+const dateFilter = document.getElementById('date-filter');
 const searchFilter = document.getElementById('search-filter');
 const resetButton = document.getElementById('reset-filters');
 const resultsContainer = document.getElementById('results-container');
@@ -108,6 +109,7 @@ function filterData() {
     const panelValue = panelFilter.value;
     const runIdValue = runIdFilter.value;
     const searchValue = searchFilter.value.toLowerCase();
+    const dateValue = dateFilter.value; // Get date filter value
 
     console.log("Filtering with values:", {
         sourceType: sourceTypeValue,
@@ -115,6 +117,7 @@ function filterData() {
         brp: brpValue,
         panel: panelValue,
         runId: runIdValue,
+        date: dateValue,
         search: searchValue
     });
 
@@ -143,6 +146,13 @@ function filterData() {
 
         if (runIdValue && meta.run_id !== runIdValue) {
             return false;
+        }
+
+        // Apply date filter (for sopa sources only)
+        if (dateValue && meta.source_type === 'sopa') {
+            if (!meta.created_date || !meta.created_date.startsWith(dateValue)) {
+                return false;
+            }
         }
 
         // Check search term against path
@@ -179,7 +189,7 @@ function displayResults() {
                     <th>Block ID</th>
                     <th>Panel</th>
                     <th>Run ID</th>
-                    <th>Date Modified</th>
+                    <th>${sourceTypeFilter.value === 'sopa' ? 'Date Created' : 'Date Modified'}</th>
                     <th>S3 URI</th>
                     <th>Action</th>
                 </tr>
@@ -189,6 +199,15 @@ function displayResults() {
 
     filteredData.forEach(file => {
         const meta = file.metadata || {};
+
+        // Determine which date to display
+        let displayDate = `${file.date} ${file.time}`;  // Default to modified date
+
+        // For sopa sources, use created date if available
+        if (meta.source_type === 'sopa' && meta.created_date) {
+            displayDate = meta.created_date;
+        }
+
         tableHTML += `
             <tr>
                 <td>${meta.source_type || '-'}</td>
@@ -196,7 +215,7 @@ function displayResults() {
                 <td>${meta.brp_id || '-'}</td>
                 <td>${meta.panel || '-'}</td>
                 <td>${meta.run_id || '-'}</td>
-                <td>${file.date} ${file.time}</td>
+                <td>${displayDate}</td>
                 <td class="s3-uri">${file.s3_uri}</td>
                 <td>
                     <button class="copy-btn" data-uri="${file.s3_uri}">Copy URI</button>
@@ -223,18 +242,59 @@ function displayResults() {
 
 // Copy text to clipboard
 function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        // Show notification
-        notification.textContent = 'Copied to clipboard!';
-        notification.classList.add('show');
+    // Try using the Clipboard API first
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text)
+            .then(() => {
+                showNotification('Copied to clipboard!');
+            })
+            .catch(err => {
+                console.error('Failed to copy with Clipboard API: ', err);
+                fallbackCopyToClipboard(text);
+            });
+    } else {
+        fallbackCopyToClipboard(text);
+    }
+}
 
-        // Hide notification after delay
-        setTimeout(() => {
-            notification.classList.remove('show');
-        }, 2000);
-    }).catch(err => {
-        console.error('Failed to copy: ', err);
-    });
+function fallbackCopyToClipboard(text) {
+    // Create a temporary textarea element
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+
+    // Make it non-editable to avoid focus and move outside the screen
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'absolute';
+    textarea.style.left = '-9999px';
+
+    document.body.appendChild(textarea);
+
+    // Select the text in the textarea
+    textarea.select();
+
+    try {
+        // Execute the copy command
+        const success = document.execCommand('copy');
+        if (success) {
+            showNotification('Copied to clipboard!');
+        } else {
+            showNotification('Copy failed. Please copy manually.');
+        }
+    } catch (err) {
+        console.error('Fallback copy failed: ', err);
+        showNotification('Copy failed. Please copy manually.');
+    }
+
+    document.body.removeChild(textarea);
+}
+
+function showNotification(message) {
+    notification.textContent = message;
+    notification.classList.add('show');
+
+    setTimeout(() => {
+        notification.classList.remove('show');
+    }, 2000);
 }
 
 // Reset all filters
@@ -245,6 +305,7 @@ function resetFilters() {
     panelFilter.value = '';
     runIdFilter.value = '';
     searchFilter.value = '';
+    dateFilter.value = ''; // Reset date filter
 
     filterData();
 }
@@ -256,6 +317,7 @@ brpFilter.addEventListener('change', filterData);
 panelFilter.addEventListener('change', filterData);
 runIdFilter.addEventListener('change', filterData);
 searchFilter.addEventListener('input', filterData);
+dateFilter.addEventListener('change', filterData);
 resetButton.addEventListener('click', resetFilters);
 
 // Initial data fetch

@@ -107,6 +107,7 @@ def extract_metadata_from_path(path):
         "run_id": None,  # For OBA outputs
         "source_type": None,  # 'sopa' or 'oba'
         "full_experiment_id": None,
+        "created_date": None,  # Added for creation date
     }
 
     # Extract project (typically second component)
@@ -123,18 +124,23 @@ def extract_metadata_from_path(path):
 
         # Extract experiment ID components from folder names (maintaining original logic)
         for part in path_parts:
-            # Look for patterns like 54590A-3PCK8T-JS_2025-04-14-1841
+            # Look for patterns like 50006A-TUQ97N-EA_2025-02-04-0920
             if re.match(r"^\w+\-\w+\-\w+\_", part):
                 metadata["full_experiment_id"] = part
-                # Extract Block ID (e.g., 54590A)
+                # Extract Block ID (e.g., 50006A)
                 block_match = re.match(r"^(\w+)\-", part)
                 if block_match:
                     metadata["brp_id"] = block_match.group(1)
 
-                # Extract Panel (e.g., 3PCK8T)
+                # Extract Panel (e.g., TUQ97N)
                 panel_match = re.match(r"^\w+\-(\w+)\-", part)
                 if panel_match:
                     metadata["panel"] = panel_match.group(1)
+
+                # Extract Creation Date (e.g., 2025-02-04 from 50006A-TUQ97N-EA_2025-02-04-0920)
+                date_match = re.search(r"_(\d{4}\-\d{2}\-\d{2})", part)
+                if date_match:
+                    metadata["created_date"] = date_match.group(1)
 
     elif "oba-outputs" in path_parts:
         metadata["source_type"] = "oba"
